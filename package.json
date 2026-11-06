@@ -1,5 +1,5 @@
 {
-  "name": "linkedin-comment-bot",
+  "name": "linkedin-comment-to-dm",
   "version": "1.0.0",
   "description": "LinkedIn comment-to-DM bot: sends a resource by DM to everyone who comments a keyword on your post (Playwright, optionally driven by n8n, Make or Zapier)",
   "keywords": [
