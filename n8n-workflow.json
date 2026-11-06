@@ -1,0 +1,337 @@
+{
+  "name": "LinkedIn | Comment-to-DM (n8n + bot Playwright)",
+  "nodes": [
+    {
+      "id": "780d04bd-e1b7-4f77-9ad6-8a735bfac3ec",
+      "name": "Toutes les 20 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 20
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "89b94d37-824b-4292-a15f-926e86f12e37",
+      "name": "Test manuel",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "bbbb253a-9ce4-478c-819c-81ba9ef97ace",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        100
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ad023dcf-515e-4105-83dc-923de664f29e",
+              "name": "BOT_URL",
+              "value": "http://localhost:3789",
+              "type": "string"
+            },
+            {
+              "id": "ce4c783b-e33b-4497-810f-d1e57f154a91",
+              "name": "BOT_TOKEN",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "5c7b4317-0009-4c11-bc9e-48bf7e3afb57",
+              "name": "DRY_RUN",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "03aeaa01-fdec-42e9-82aa-64a803621b6f",
+              "name": "POSTS_JSON",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "3bc3d82d-8edb-471c-a6ef-7479f9772e56",
+              "name": "WEBHOOK_URL",
+              "value": "https://exemple.com/mon-webhook",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c5c496ee-a55c-48af-b34d-3d239d6c147a",
+      "name": "Bot disponible ?",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        100
+      ],
+      "parameters": {
+        "url": "={{ $('Config').first().json.BOT_URL }}/health",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-bot-token",
+              "value": "={{ $('Config').first().json.BOT_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "c2a91717-60b6-445e-8f17-53d1b3eb0c68",
+      "name": "Déjà en cours ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3b2c9202-7338-49dc-bf7f-167923c5e428",
+              "leftValue": "={{ $json.busy }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "c572a26d-f9dc-4e5c-b698-cd32962bf2fb",
+      "name": "On saute ce passage",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "fb79570f-1ffc-4e15-8755-e9347816576a",
+      "name": "Lancer un passage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.BOT_URL }}/run",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-bot-token",
+              "value": "={{ $('Config').first().json.BOT_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify(Object.assign({ dryRun: $('Config').first().json.DRY_RUN }, $('Config').first().json.POSTS_JSON ? { posts: JSON.parse($('Config').first().json.POSTS_JSON) } : {})) }}",
+        "options": {
+          "timeout": 1800000
+        }
+      }
+    },
+    {
+      "id": "df839e34-5569-47a0-847a-2323eb059bff",
+      "name": "Leads du passage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        200
+      ],
+      "parameters": {
+        "jsCode": "// Garde les actions qui comptent (DM envoyé, invitation, invitation acceptée) : une ligne = un lead.\n// needs_human_reply = commentaire avec une vraie question : à toi de répondre (idéal pour une alerte Slack).\n// En dry run, garde aussi ce que le bot \"aurait fait\", pour tester la suite du workflow.\nconst r = $input.first().json;\nconst utiles = r.dryRun\n  ? ['would_dm', 'would_invite', 'would_accept_and_dm']\n  : ['dm_sent', 'invited', 'invite_accepted', 'needs_human_reply'];\nreturn (r.events || [])\n  .filter((e) => utiles.includes(e.action))\n  .map((e) => ({ json: {\n    nom: e.name,\n    profil_linkedin: e.profileUrl,\n    commentaire: e.comment,\n    action: e.action,\n    post: e.post,\n    dry_run: r.dryRun,\n    date: r.finishedAt || r.startedAt,\n  } }));"
+      }
+    },
+    {
+      "id": "48c81915-68da-46cb-ad1a-447e2d4fa074",
+      "name": "Envoyer vers ton outil (webhook)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        200
+      ],
+      "disabled": true,
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "bb839e9d-f3f5-430f-a0f7-0531ef9073e7",
+      "name": "Note démarrage",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -380
+      ],
+      "parameters": {
+        "width": 660,
+        "height": 340,
+        "content": "## 1. Avant de lancer\n1. Sur ton ordi : `npm run login` (une fois), puis `npm run server` dans le dossier du bot. Laisse le terminal ouvert.\n2. Ici : **Config**. BOT_URL = `http://localhost:3789` si n8n tourne avec `npx n8n`. Avec Docker : `http://host.docker.internal:3789` (et lance le bot avec HOST=0.0.0.0 et un BOT_TOKEN).\n3. Laisse **DRY_RUN = true**, clique *Test manuel* : regarde la sortie de *Leads du passage*.\n4. Passe DRY_RUN à false et **active** le workflow."
+      }
+    },
+    {
+      "id": "572ca810-e9b0-4f8b-a7c2-0b229f5520a8",
+      "name": "Note sortie",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1160,
+        -380
+      ],
+      "parameters": {
+        "color": 4,
+        "width": 560,
+        "height": 340,
+        "content": "## 2. Où vont les leads\nChaque item = une personne (nom, profil, commentaire, action).\n\nLe nœud webhook est **désactivé** : remplace-le par ce que tu utilises (HubSpot, Google Sheets, Notion, Slack…) ou active-le avec l'URL d'un webhook Make / Zapier / CRM.\n\nPOSTS_JSON (facultatif) : liste de posts au format `[{\"url\":\"…\",\"keyword\":\"…\",\"resourceUrl\":\"…\"}]` pour remplacer ceux de config.json."
+      }
+    }
+  ],
+  "connections": {
+    "Toutes les 20 min": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test manuel": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Bot disponible ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bot disponible ?": {
+      "main": [
+        [
+          {
+            "node": "Déjà en cours ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Déjà en cours ?": {
+      "main": [
+        [
+          {
+            "node": "On saute ce passage",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Lancer un passage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancer un passage": {
+      "main": [
+        [
+          {
+            "node": "Leads du passage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leads du passage": {
+      "main": [
+        [
+          {
+            "node": "Envoyer vers ton outil (webhook)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "active": false
+}

@@ -1,0 +1,35 @@
+{
+  "name": "linkedin-comment-bot",
+  "version": "1.0.0",
+  "description": "LinkedIn comment-to-DM bot: sends a resource by DM to everyone who comments a keyword on your post (Playwright, optionally driven by n8n, Make or Zapier)",
+  "keywords": [
+    "linkedin",
+    "lead-magnet",
+    "comment-to-dm",
+    "playwright",
+    "n8n",
+    "automation"
+  ],
+  "homepage": "https://no-mad.io/en/lab/comment-to-dm",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/julien-bonnet-io/linkedin-comment-to-dm.git"
+  },
+  "license": "MIT",
+  "author": "Julien Bonnet (https://no-mad.io)",
+  "main": "bot.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "setup": "npm install && npx playwright install chromium",
+    "login": "node login.js",
+    "dry": "node bot.js --dry-run",
+    "start": "node bot.js",
+    "watch": "node bot.js --watch",
+    "server": "node server.js"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0"
+  }
+}

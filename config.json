@@ -1,0 +1,53 @@
+{
+  "posts": [
+    {
+      "url": "https://www.linkedin.com/posts/ton-slug_xxxx-activity-7390000000000000000-AbCd",
+      "keyword": "GUIDE",
+      "match": "contains",
+      "resourceUrl": "https://exemple.com/ma-ressource",
+      "active": true
+    }
+  ],
+  "mySlug": "ton-slug-linkedin",
+  "dryRun": true,
+  "replyToComments": true,
+  "acceptIncomingInvites": true,
+  "humanReply": {
+    "onQuestion": true,
+    "minWords": 25
+  },
+  "maxProfileVisitsPerRun": 15,
+  "dailyMaxDMs": 40,
+  "dailyMaxInvites": 15,
+  "activeHours": [
+    8,
+    21
+  ],
+  "watchIntervalMinutes": [
+    12,
+    20
+  ],
+  "delayBetweenPeopleSeconds": [
+    40,
+    110
+  ],
+  "recheckPendingEveryMinutes": 60,
+  "stopRecheckingAfterDays": 21,
+  "messages": {
+    "dm": [
+      "Hello {firstName} !\n\nMerci pour ton commentaire 🙌 Voici la ressource promise : {resourceUrl}\n\nDis-moi ce que tu en penses, et si tu as des questions je suis là.",
+      "Salut {firstName}, comme promis : {resourceUrl}\n\nBonne lecture, et n'hésite pas à me dire si quelque chose n'est pas clair."
+    ],
+    "dmNewConnection": [
+      "Merci pour la connexion {firstName} 🤝\n\nVoici la ressource promise : {resourceUrl}\n\nDis-moi ce que tu en penses !"
+    ],
+    "replyDm": [
+      "Envoyé en DM 📩",
+      "C'est parti dans tes messages 📬",
+      "Hop, check tes DM 👌"
+    ],
+    "replyInvite": [
+      "Je viens de t'envoyer une invitation, accepte-la et la ressource arrive en DM 👌"
+    ]
+  }
+}

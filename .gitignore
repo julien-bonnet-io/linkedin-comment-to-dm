@@ -1,0 +1,12 @@
+# Dépendances
+node_modules/
+
+# Session LinkedIn et données personnelles : ne jamais publier
+.browser-profile/
+state.json
+leads.csv
+
+# Système
+.DS_Store
+Thumbs.db
+*.log
